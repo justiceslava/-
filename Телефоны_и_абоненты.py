@@ -158,9 +158,9 @@ class MainWindow(QMainWindow):
     # Создание вкладки импорта в главном окне
     def create_import_tab(self):
         layout=QVBoxLayout()
-        import_abonents_btn=QPushButton('Импортировать таблицу абонентов из Excel')
-        import_phones_btn=QPushButton('Импортировать таблицу телефонов из Excel')
-        import_plans_btn=QPushButton('Импортировать таблицу тарифов из Excel')
+        import_abonents_btn=QPushButton('Импортировать Excel таблицу "abonents.xlsx" в таблицу абонентов ')
+        import_phones_btn=QPushButton('Импортировать Excel таблицу "phones.xlsx" в таблицу телефонов')
+        import_plans_btn=QPushButton('Импортировать Excel таблицу "plans.xlsx" в таблицу тарифов')
         layout.addWidget(import_abonents_btn)
         layout.addWidget(import_phones_btn)
         layout.addWidget(import_plans_btn)
@@ -328,6 +328,11 @@ class MainWindow(QMainWindow):
     # Импорт абонентов из Excel
     def import_abonents_to_excel(self):
         try:
+            reply = QMessageBox.question(self, 'Подтверждение',
+                                         'Начать импорт таблицы абонентов?',
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.No:
+                return
             reply = QMessageBox.question(self, 'Параметры импорта',
                                          'Заменить текущую таблицу?',
                                          QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -372,6 +377,12 @@ class MainWindow(QMainWindow):
     # Импорт телефонов из Excel
     def import_phones_to_excel(self):
         try:
+            reply = QMessageBox.question(self, 'Подтверждение',
+                                         'Начать импорт таблицы телефонов?',
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                         QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.No:
+                return
             reply = QMessageBox.question(self, 'Параметры импорта',
                                          'Заменить текущую таблицу?',
                                          QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -416,6 +427,12 @@ class MainWindow(QMainWindow):
     # Импорт тарифов из Excel
     def import_plans_to_excel(self):
         try:
+            reply = QMessageBox.question(self, 'Подтверждение',
+                                         'Начать импорт таблицы тарифов?',
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                         QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.No:
+                return
             reply = QMessageBox.question(self, 'Параметры импорта',
                                          'Заменить текущую таблицу?',
                                          QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
