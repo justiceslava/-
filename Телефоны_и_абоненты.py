@@ -475,15 +475,6 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, 'Внимание',
                                     'Сначала закройте Excel тарифов телефонов')
 
-    # Парсер поиска совпадений в полях
-    def search_data(self, table_widget, search_text):
-        for row in range(table_widget.rowCount()):
-            for column in range(table_widget.columnCount()):
-                item = table_widget.item(row, column)
-                if item and search_text in item.text():
-                    return True
-        return False
-
     # Фильтр таблицы
     def apply_filter(self, table_widget, search_text):
         for row in range(table_widget.rowCount()):
