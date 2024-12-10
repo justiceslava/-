@@ -503,7 +503,7 @@ class MainWindow(QMainWindow):
                 id_abonent = self.abonents_table.item(row, 0).text()
                 if self.check_dependencies('abonents', id_abonent):
                     reply = QMessageBox.question(self, 'Удаление записи',
-                                                 'Удалить запись и все связанные с ней записи в таблице phones?',
+                                                 'Удалить запись и все связанные с ней записи в таблице Телефоны?',
                                                  QMessageBox.StandardButton.Yes,
                                                  QMessageBox.StandardButton.No)
                     if reply == QMessageBox.StandardButton.Yes:
@@ -541,6 +541,7 @@ class MainWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, 'Ошибка',
                                     'Выберите запись для удаления.')
+            QMessageBox.information(self, 'Успешно', 'Запись удалена')
             self.update_abonents_table()
             self.update_phones_table()
         except Exception as e:
@@ -563,6 +564,7 @@ class MainWindow(QMainWindow):
                 self.update_phones_table()
         else:
             QMessageBox.warning(self, 'Предупреждение', 'Выберите телефон')
+        QMessageBox.information(self, 'Успешно', 'Запись удалена')
 
     # Удаление записи о тарифе
     def delete_plan(self):
@@ -572,7 +574,7 @@ class MainWindow(QMainWindow):
                 id_plan = self.plans_table.item(row, 0).text()
                 if self.check_dependencies('plans', id_plan):
                     reply = QMessageBox.question(self, 'Удаление записи',
-                                                 'Удалить запись и все связанные с ней записи в таблице phones?',
+                                                 'Удалить запись и все связанные с ней записи в таблице Телефоны?',
                                                  QMessageBox.StandardButton.Yes,
                                                  QMessageBox.StandardButton.No)
                     if reply == QMessageBox.StandardButton.Yes:
@@ -610,6 +612,7 @@ class MainWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, 'Ошибка',
                                     'Выберите запись для удаления.')
+            QMessageBox.information(self, 'Успешно', 'Запись удалена')
             self.update_phones_table()
             self.update_plans_table()
         except Exception as e:
