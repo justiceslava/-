@@ -328,19 +328,24 @@ class MainWindow(QMainWindow):
     # Импорт абонентов из Excel
     def import_abonents_to_excel(self):
         try:
-            self.cursor.execute('DELETE FROM abonents')
+            reply = QMessageBox.question(self, 'Параметры импорта',
+                                         'Заменить текущую таблицу?',
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                         QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
+                self.cursor.execute('DELETE FROM abonents')
             wb = openpyxl.load_workbook("abonents.xlsx")
             ws1 = wb.active
-            # Read data from the sheets
+
             abonents_data = []
             for row in ws1.rows:
                 abonents_data.append([cell.value for cell in row])
-            # Insert data into the database
+
             for row in abonents_data:
                 self.cursor.execute('''
                     INSERT INTO abonents (name, birth, entity)
                     VALUES (?, ?, ?)
-                ''', row[1:])  # exclude the first value (id_phone)
+                ''', row[1:])
                 self.db.commit()
                 self.update_abonents_table()
             QMessageBox.information(self, 'Успешно',
@@ -367,24 +372,28 @@ class MainWindow(QMainWindow):
     # Импорт телефонов из Excel
     def import_phones_to_excel(self):
         try:
-            self.cursor.execute('DELETE FROM phones')
+            reply = QMessageBox.question(self, 'Параметры импорта',
+                                         'Заменить текущую таблицу?',
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                         QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
+                self.cursor.execute('DELETE FROM phones')
             wb = openpyxl.load_workbook("phones.xlsx")
             ws1 = wb.active
 
-            # Read data from the sheets
             phones_data = []
             for row in ws1.rows:
                 phones_data.append([cell.value for cell in row])
-            # Insert data into the database
+
             for row in phones_data:
                 self.cursor.execute('''
                     INSERT INTO phones (owner_id, plan_id, phone, region, block, roaming, lastactive, regdate)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ''', row[1:])  # exclude the first value (id_phone)
+                ''', row[1:])
                 self.db.commit()
                 self.update_phones_table()
             QMessageBox.information(self, 'Успешно',
-                               'Таблица номеров импортирована из Excel')
+                                    'Таблица номеров импортирована из Excel')
         except Exception as e:
             QMessageBox.critical(self, 'Ошибка', str(e))
 
@@ -407,21 +416,25 @@ class MainWindow(QMainWindow):
     # Импорт тарифов из Excel
     def import_plans_to_excel(self):
         try:
-            self.cursor.execute('DELETE FROM plans')
-            # Load the Excel file
+            reply = QMessageBox.question(self, 'Параметры импорта',
+                                         'Заменить текущую таблицу?',
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                         QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
+                self.cursor.execute('DELETE FROM plans')
+
             wb = openpyxl.load_workbook("plans.xlsx")
             ws1 = wb.active
 
-            # Read data from the sheets
             plans_data = []
             for row in ws1.rows:
                 plans_data.append([cell.value for cell in row])
-            # Insert data into the database
+
             for row in plans_data:
                 self.cursor.execute('''
                     INSERT INTO plans (name, price, traffic, calls, sms)
                     VALUES (?, ?, ?, ?, ?)
-                ''', row[1:])  # exclude the first value (id_phone)
+                ''', row[1:])
                 self.db.commit()
                 self.update_plans_table()
             QMessageBox.information(self, 'Успешно',
@@ -464,21 +477,6 @@ class MainWindow(QMainWindow):
                     visible = True
                     break
             table_widget.setRowHidden(row, not visible)
-
-    # Проверка зависимостей перед удалением
-    def check_dependencies(self, table_name, id):
-        if table_name == 'abonents':
-            query = "SELECT * FROM phones WHERE owner_id = ?"
-        elif table_name == 'plans':
-            query = "SELECT * FROM phones WHERE plan_id = ?"
-        else:
-            return False
-
-        self.cursor.execute(query, (id,))
-        if self.cursor.fetchone():
-            return True
-        else:
-            return False
 
     # Удаление записи об абоненте
     def delete_abonent(self):
@@ -599,6 +597,21 @@ class MainWindow(QMainWindow):
             self.update_plans_table()
         except Exception as e:
             QMessageBox.warning(self, 'Ошибка', str(e))
+
+    # Проверка зависимостей перед удалением
+    def check_dependencies(self, table_name, id):
+        if table_name == 'abonents':
+            query = "SELECT * FROM phones WHERE owner_id = ?"
+        elif table_name == 'plans':
+            query = "SELECT * FROM phones WHERE plan_id = ?"
+        else:
+            return False
+
+        self.cursor.execute(query, (id,))
+        if self.cursor.fetchone():
+            return True
+        else:
+            return False
 
     # Обновление данных в таблице абонентов
     def update_abonents_table(self):
