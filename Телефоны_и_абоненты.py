@@ -343,6 +343,7 @@ class MainWindow(QMainWindow):
         try:
             selected_row = self.abonents_table.currentRow()
             if selected_row == -1:
+                QMessageBox.warning(self, 'Предупреждение', 'Выберите абонента')
                 return
 
             abonent_data = self.cursor.execute("SELECT * FROM abonents WHERE id_abonent=?",
@@ -393,6 +394,7 @@ class MainWindow(QMainWindow):
         try:
             selected_row = self.phones_table.currentRow()
             if selected_row == -1:
+                QMessageBox.warning(self, 'Предупреждение', 'Выберите телефон')
                 return
 
             phone_data = self.cursor.execute("SELECT * FROM phones WHERE id_phone=?",
@@ -486,6 +488,7 @@ class MainWindow(QMainWindow):
         try:
             selected_row = self.plans_table.currentRow()
             if selected_row == -1:
+                QMessageBox.warning(self, 'Предупреждение', 'Выберите тариф')
                 return
 
             plan_data = self.cursor.execute("SELECT * FROM plans WHERE id_plan=?",
