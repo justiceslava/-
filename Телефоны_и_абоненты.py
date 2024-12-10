@@ -7,7 +7,6 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, \
 from PyQt6.QtCore import Qt
 import sqlite3
 from openpyxl import Workbook
-from functools import partial
 
 # Класс главного и диалоговых окон
 class MainWindow(QMainWindow):
@@ -43,189 +42,6 @@ class MainWindow(QMainWindow):
         self.update_plans_table()
         self.update_phones_table()
         self.update_abonents_table()
-
-    # Парсер поиска совпадений в полях
-    def search_data(self, table_widget, search_text):
-        for row in range(table_widget.rowCount()):
-            for column in range(table_widget.columnCount()):
-                item = table_widget.item(row, column)
-                if item and search_text in item.text():
-                    return True
-        return False
-
-    # Фильтр таблицы
-    def apply_filter(self, table_widget, search_text):
-        for row in range(table_widget.rowCount()):
-            visible = False
-            for column in range(table_widget.columnCount()):
-                item = table_widget.item(row, column)
-                if item and search_text.lower() in item.text().lower():
-                    visible = True
-                    break
-            table_widget.setRowHidden(row, not visible)
-
-    # Создание вкладки импорта в главном окне
-    def create_import_tab(self):
-        layout=QVBoxLayout()
-        import_abonents_btn=QPushButton('Импортировать таблицу абонентов из Excel')
-        import_phones_btn=QPushButton('Импортировать таблицу телефонов из Excel')
-        import_plans_btn=QPushButton('Импортировать таблицу тарифов из Excel')
-        layout.addWidget(import_abonents_btn)
-        layout.addWidget(import_phones_btn)
-        layout.addWidget(import_plans_btn)
-        import_abonents_btn.clicked.connect(self.import_abonents_to_excel)
-        import_phones_btn.clicked.connect(self.import_phones_to_excel)
-        import_plans_btn.clicked.connect(self.import_plans_to_excel)
-        self.import_tab.setLayout(layout)
-
-    # Создание вкладки экспорта в главном окне
-    def create_export_tab(self):
-        layout=QVBoxLayout()
-        export_abonents_btn=QPushButton('Экспортировать таблицу абонентов в Excel')
-        export_phones_btn=QPushButton('Экспортировать таблицу телефонов в Excel')
-        export_plans_btn=QPushButton('Экспортировать таблицу тарифов в Excel')
-        layout.addWidget(export_abonents_btn)
-        layout.addWidget(export_phones_btn)
-        layout.addWidget(export_plans_btn)
-        export_abonents_btn.clicked.connect(self.export_abonents_to_excel)
-        export_phones_btn.clicked.connect(self.export_phones_to_excel)
-        export_plans_btn.clicked.connect(self.export_plans_to_excel)
-        self.export_tab.setLayout(layout)
-
-    # Импорт абонентов из Excel
-    def import_abonents_to_excel(self):
-        try:
-            self.cursor.execute('DELETE FROM abonents')
-            wb = openpyxl.load_workbook("abonents.xlsx")
-            ws1 = wb.active
-            # Read data from the sheets
-            abonents_data = []
-            for row in ws1.rows:
-                abonents_data.append([cell.value for cell in row])
-            # Insert data into the database
-            for row in abonents_data:
-                self.cursor.execute('''
-                    INSERT INTO abonents (name, birth, entity)
-                    VALUES (?, ?, ?)
-                ''', row[1:])  # exclude the first value (id_phone)
-                self.db.commit()
-                self.update_abonents_table()
-            QMessageBox.information(self, 'Успешно',
-                                    'Таблица абонентов импортирована из Excel')
-        except Exception as e:
-            QMessageBox.critical(self, 'Ошибка', str(e))
-
-    # Экспорт абонентов в Excel
-    def export_abonents_to_excel(self):
-        try:
-            wb = Workbook()
-            ws = wb.active
-            rows = self.cursor.execute('SELECT * FROM abonents').fetchall()
-            for i, row in enumerate(rows):
-                for j, item in enumerate(row):
-                    ws.cell(row=i + 1, column=j + 1).value = item
-            wb.save('abonents.xlsx')
-            QMessageBox.information(self, 'Успешно',
-                                    'Таблица абонентов экспортирована в Excel')
-        except Exception:
-            QMessageBox.critical(self, 'Внимание',
-                                    'Сначала закройте Excel таблицу абонентов')
-
-    # Импорт телефонов из Excel
-    def import_phones_to_excel(self):
-        try:
-            self.cursor.execute('DELETE FROM phones')
-            wb = openpyxl.load_workbook("phones.xlsx")
-            ws1 = wb.active
-
-            # Read data from the sheets
-            phones_data = []
-            for row in ws1.rows:
-                phones_data.append([cell.value for cell in row])
-            # Insert data into the database
-            for row in phones_data:
-                self.cursor.execute('''
-                    INSERT INTO phones (owner_id, plan_id, phone, region, block, roaming, lastactive, regdate)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ''', row[1:])  # exclude the first value (id_phone)
-                self.db.commit()
-                self.update_phones_table()
-            QMessageBox.information(self, 'Успешно',
-                               'Таблица номеров импортирована из Excel')
-        except Exception as e:
-            QMessageBox.critical(self, 'Ошибка', str(e))
-
-    # Экспорт телефонов в Excel
-    def export_phones_to_excel(self):
-        try:
-            wb = Workbook()
-            ws = wb.active
-            rows = self.cursor.execute('SELECT * FROM phones').fetchall()
-            for i, row in enumerate(rows):
-                for j, item in enumerate(row):
-                    ws.cell(row=i + 1, column=j + 1).value = item
-            wb.save('phones.xlsx')
-            QMessageBox.information(self, 'Успешно',
-                                    'Таблица телефонов экспортирована в Excel')
-        except Exception:
-            QMessageBox.critical(self, 'Внимание',
-                                    'Сначала закройте Excel таблицу телефонов')
-
-    # Импорт тарифов из Excel
-    def import_plans_to_excel(self):
-        try:
-            self.cursor.execute('DELETE FROM plans')
-            # Load the Excel file
-            wb = openpyxl.load_workbook("plans.xlsx")
-            ws1 = wb.active
-
-            # Read data from the sheets
-            plans_data = []
-            for row in ws1.rows:
-                plans_data.append([cell.value for cell in row])
-            # Insert data into the database
-            for row in plans_data:
-                self.cursor.execute('''
-                    INSERT INTO plans (name, price, traffic, calls, sms)
-                    VALUES (?, ?, ?, ?, ?)
-                ''', row[1:])  # exclude the first value (id_phone)
-                self.db.commit()
-                self.update_plans_table()
-            QMessageBox.information(self, 'Успешно',
-                                    'Таблица тарифов импортирована из Excel')
-        except Exception as e:
-            QMessageBox.critical(self, 'Ошибка', str(e))
-
-    # Экспорт тарифов в Excel
-    def export_plans_to_excel(self):
-        try:
-            wb = Workbook()
-            ws = wb.active
-            rows = self.cursor.execute('SELECT * FROM plans').fetchall()
-            for i, row in enumerate(rows):
-                for j, item in enumerate(row):
-                    ws.cell(row=i + 1, column=j + 1).value = item
-            wb.save('plans.xlsx')
-            QMessageBox.information(self, 'Успешно',
-                                    'Таблица тарифов экспортирована в Excel')
-        except Exception:
-            QMessageBox.critical(self, 'Внимание',
-                                    'Сначала закройте Excel тарифов телефонов')
-
-    # Проверка зависимостей перед удалением
-    def check_dependencies(self, table_name, id):
-        if table_name == 'abonents':
-            query = "SELECT * FROM phones WHERE owner_id = ?"
-        elif table_name == 'plans':
-            query = "SELECT * FROM phones WHERE plan_id = ?"
-        else:
-            return False
-
-        self.cursor.execute(query, (id,))
-        if self.cursor.fetchone():
-            return True
-        else:
-            return False
 
     # Создание таблицы если ее нет
     def create_tables(self):
@@ -338,6 +154,34 @@ class MainWindow(QMainWindow):
         layout.addWidget(search_edit)
         search_edit.textChanged.connect(
             lambda: self.apply_filter(self.plans_table, search_edit.text()))
+
+    # Создание вкладки импорта в главном окне
+    def create_import_tab(self):
+        layout=QVBoxLayout()
+        import_abonents_btn=QPushButton('Импортировать таблицу абонентов из Excel')
+        import_phones_btn=QPushButton('Импортировать таблицу телефонов из Excel')
+        import_plans_btn=QPushButton('Импортировать таблицу тарифов из Excel')
+        layout.addWidget(import_abonents_btn)
+        layout.addWidget(import_phones_btn)
+        layout.addWidget(import_plans_btn)
+        import_abonents_btn.clicked.connect(self.import_abonents_to_excel)
+        import_phones_btn.clicked.connect(self.import_phones_to_excel)
+        import_plans_btn.clicked.connect(self.import_plans_to_excel)
+        self.import_tab.setLayout(layout)
+
+    # Создание вкладки экспорта в главном окне
+    def create_export_tab(self):
+        layout=QVBoxLayout()
+        export_abonents_btn=QPushButton('Экспортировать таблицу абонентов в Excel')
+        export_phones_btn=QPushButton('Экспортировать таблицу телефонов в Excel')
+        export_plans_btn=QPushButton('Экспортировать таблицу тарифов в Excel')
+        layout.addWidget(export_abonents_btn)
+        layout.addWidget(export_phones_btn)
+        layout.addWidget(export_plans_btn)
+        export_abonents_btn.clicked.connect(self.export_abonents_to_excel)
+        export_phones_btn.clicked.connect(self.export_phones_to_excel)
+        export_plans_btn.clicked.connect(self.export_plans_to_excel)
+        self.export_tab.setLayout(layout)
 
     # Создание абонента диалоговым окном
     def create_abonent(self):
@@ -480,6 +324,161 @@ class MainWindow(QMainWindow):
             self.update_plans_table()
         except sqlite3.Error as e:
             QMessageBox.critical(self, 'Ошибка', str(e))
+
+    # Импорт абонентов из Excel
+    def import_abonents_to_excel(self):
+        try:
+            self.cursor.execute('DELETE FROM abonents')
+            wb = openpyxl.load_workbook("abonents.xlsx")
+            ws1 = wb.active
+            # Read data from the sheets
+            abonents_data = []
+            for row in ws1.rows:
+                abonents_data.append([cell.value for cell in row])
+            # Insert data into the database
+            for row in abonents_data:
+                self.cursor.execute('''
+                    INSERT INTO abonents (name, birth, entity)
+                    VALUES (?, ?, ?)
+                ''', row[1:])  # exclude the first value (id_phone)
+                self.db.commit()
+                self.update_abonents_table()
+            QMessageBox.information(self, 'Успешно',
+                                    'Таблица абонентов импортирована из Excel')
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', str(e))
+
+    # Экспорт абонентов в Excel
+    def export_abonents_to_excel(self):
+        try:
+            wb = Workbook()
+            ws = wb.active
+            rows = self.cursor.execute('SELECT * FROM abonents').fetchall()
+            for i, row in enumerate(rows):
+                for j, item in enumerate(row):
+                    ws.cell(row=i + 1, column=j + 1).value = item
+            wb.save('abonents.xlsx')
+            QMessageBox.information(self, 'Успешно',
+                                    'Таблица абонентов экспортирована в Excel')
+        except Exception:
+            QMessageBox.critical(self, 'Внимание',
+                                    'Сначала закройте Excel таблицу абонентов')
+
+    # Импорт телефонов из Excel
+    def import_phones_to_excel(self):
+        try:
+            self.cursor.execute('DELETE FROM phones')
+            wb = openpyxl.load_workbook("phones.xlsx")
+            ws1 = wb.active
+
+            # Read data from the sheets
+            phones_data = []
+            for row in ws1.rows:
+                phones_data.append([cell.value for cell in row])
+            # Insert data into the database
+            for row in phones_data:
+                self.cursor.execute('''
+                    INSERT INTO phones (owner_id, plan_id, phone, region, block, roaming, lastactive, regdate)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ''', row[1:])  # exclude the first value (id_phone)
+                self.db.commit()
+                self.update_phones_table()
+            QMessageBox.information(self, 'Успешно',
+                               'Таблица номеров импортирована из Excel')
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', str(e))
+
+    # Экспорт телефонов в Excel
+    def export_phones_to_excel(self):
+        try:
+            wb = Workbook()
+            ws = wb.active
+            rows = self.cursor.execute('SELECT * FROM phones').fetchall()
+            for i, row in enumerate(rows):
+                for j, item in enumerate(row):
+                    ws.cell(row=i + 1, column=j + 1).value = item
+            wb.save('phones.xlsx')
+            QMessageBox.information(self, 'Успешно',
+                                    'Таблица телефонов экспортирована в Excel')
+        except Exception:
+            QMessageBox.critical(self, 'Внимание',
+                                    'Сначала закройте Excel таблицу телефонов')
+
+    # Импорт тарифов из Excel
+    def import_plans_to_excel(self):
+        try:
+            self.cursor.execute('DELETE FROM plans')
+            # Load the Excel file
+            wb = openpyxl.load_workbook("plans.xlsx")
+            ws1 = wb.active
+
+            # Read data from the sheets
+            plans_data = []
+            for row in ws1.rows:
+                plans_data.append([cell.value for cell in row])
+            # Insert data into the database
+            for row in plans_data:
+                self.cursor.execute('''
+                    INSERT INTO plans (name, price, traffic, calls, sms)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', row[1:])  # exclude the first value (id_phone)
+                self.db.commit()
+                self.update_plans_table()
+            QMessageBox.information(self, 'Успешно',
+                                    'Таблица тарифов импортирована из Excel')
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', str(e))
+
+    # Экспорт тарифов в Excel
+    def export_plans_to_excel(self):
+        try:
+            wb = Workbook()
+            ws = wb.active
+            rows = self.cursor.execute('SELECT * FROM plans').fetchall()
+            for i, row in enumerate(rows):
+                for j, item in enumerate(row):
+                    ws.cell(row=i + 1, column=j + 1).value = item
+            wb.save('plans.xlsx')
+            QMessageBox.information(self, 'Успешно',
+                                    'Таблица тарифов экспортирована в Excel')
+        except Exception:
+            QMessageBox.critical(self, 'Внимание',
+                                    'Сначала закройте Excel тарифов телефонов')
+
+    # Парсер поиска совпадений в полях
+    def search_data(self, table_widget, search_text):
+        for row in range(table_widget.rowCount()):
+            for column in range(table_widget.columnCount()):
+                item = table_widget.item(row, column)
+                if item and search_text in item.text():
+                    return True
+        return False
+
+    # Фильтр таблицы
+    def apply_filter(self, table_widget, search_text):
+        for row in range(table_widget.rowCount()):
+            visible = False
+            for column in range(table_widget.columnCount()):
+                item = table_widget.item(row, column)
+                if item and search_text.lower() in item.text().lower():
+                    visible = True
+                    break
+            table_widget.setRowHidden(row, not visible)
+
+    # Проверка зависимостей перед удалением
+    def check_dependencies(self, table_name, id):
+        if table_name == 'abonents':
+            query = "SELECT * FROM phones WHERE owner_id = ?"
+        elif table_name == 'plans':
+            query = "SELECT * FROM phones WHERE plan_id = ?"
+        else:
+            return False
+
+        self.cursor.execute(query, (id,))
+        if self.cursor.fetchone():
+            return True
+        else:
+            return False
 
     # Удаление записи об абоненте
     def delete_abonent(self):
