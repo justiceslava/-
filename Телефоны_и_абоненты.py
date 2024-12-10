@@ -87,7 +87,7 @@ class MainWindow(QMainWindow):
         self.abonents_table = QTableWidget()
         self.abonents_table.setSortingEnabled(True)
         self.abonents_table.setColumnCount(4)
-        self.abonents_table.setHorizontalHeaderLabels(['ID', 'Имя', 'Дата рождения', 'Организация'])
+        self.abonents_table.setHorizontalHeaderLabels(['ID', 'Имя', 'Дата рождения', 'Тип субъекта'])
         layout.addWidget(self.abonents_table)
 
         create_button = QPushButton('Создать')
