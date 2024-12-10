@@ -3,8 +3,9 @@ import sys
 import openpyxl
 from PyQt6.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, \
     QTableWidget, QTableWidgetItem, QVBoxLayout, QHBoxLayout, QPushButton, \
-    QFormLayout, QLabel, QLineEdit, QComboBox, QDateEdit, QMessageBox, QDialog
-from PyQt6.QtCore import Qt
+    QFormLayout, QLabel, QLineEdit, QComboBox, QDateEdit, QMessageBox, QDialog, \
+    QDoubleSpinBox, QTextEdit
+from PyQt6.QtCore import Qt, QDate
 import sqlite3
 from openpyxl import Workbook
 
@@ -94,6 +95,10 @@ class MainWindow(QMainWindow):
         create_button.clicked.connect(self.create_abonent)
         layout.addWidget(create_button)
 
+        edit_button = QPushButton("Редактировать")
+        edit_button.clicked.connect(self.edit_abonent)
+        layout.addWidget(edit_button)
+
         delete_button = QPushButton('Удалить')
         delete_button.clicked.connect(self.delete_abonent)
         layout.addWidget(delete_button)
@@ -117,6 +122,10 @@ class MainWindow(QMainWindow):
         create_button = QPushButton('Создать')
         create_button.clicked.connect(self.create_phone)
         layout.addWidget(create_button)
+
+        edit_button = QPushButton("Редактировать")
+        edit_button.clicked.connect(self.edit_phone)
+        layout.addWidget(edit_button)
 
         delete_button = QPushButton('Удалить')
         delete_button.clicked.connect(self.delete_phone)
@@ -142,6 +151,10 @@ class MainWindow(QMainWindow):
         create_button = QPushButton('Создать')
         create_button.clicked.connect(self.create_plan)
         layout.addWidget(create_button)
+
+        edit_button = QPushButton("Редактировать")
+        edit_button.clicked.connect(self.edit_plan)
+        layout.addWidget(edit_button)
 
         delete_button = QPushButton('Удалить')
         delete_button.clicked.connect(self.delete_plan)
@@ -324,6 +337,211 @@ class MainWindow(QMainWindow):
             self.update_plans_table()
         except sqlite3.Error as e:
             QMessageBox.critical(self, 'Ошибка', str(e))
+
+    # Редактирование абонента
+    def edit_abonent(self):
+        try:
+            selected_row = self.abonents_table.currentRow()
+            if selected_row == -1:
+                return
+
+            abonent_data = self.cursor.execute("SELECT * FROM abonents WHERE id_abonent=?",
+                                               (self.abonents_table.item(selected_row,0).text(),)).fetchone()
+            dialog = QDialog()
+            dialog.setWindowTitle("Редактировать абонента")
+
+            layout = QFormLayout()
+            name_edit = QLineEdit(abonent_data[1])
+            birth_edit = QLineEdit(abonent_data[2])
+            entity_edit = QLineEdit(abonent_data[3])
+            layout.addRow("Имя", name_edit)
+            layout.addRow("Дата рождения", birth_edit)
+            layout.addRow("Тип субъекта", entity_edit)
+
+            save_button = QPushButton("Сохранить")
+            save_button.clicked.connect(
+                lambda: self.save_abonent_edit(abonent_data[0], name_edit.text(),birth_edit.text(),
+                                               entity_edit.text(), dialog))
+            layout.addWidget(save_button)
+
+            dialog.setLayout(layout)
+            dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка редактирования", str(e))
+
+    # Обновление данных абонента
+    def save_abonent_edit(self, abonent_id, name, birth, entity, dialog):
+        try:
+            if not name or not entity:
+                QMessageBox.warning(self, 'Ошибка', 'Заполните все поля')
+                return
+            self.cursor.execute(
+                "UPDATE abonents SET name=?, birth=?, entity=? WHERE id_abonent=?",
+                (name, birth, entity, abonent_id))
+            self.db.commit()
+
+
+            self.update_abonents_table()
+
+            QMessageBox.information(self, "Успешно", "Абонент обновлен")
+            dialog.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка обновления", str(e))
+
+    # Редактирование телефона
+    def edit_phone(self):
+        try:
+            selected_row = self.phones_table.currentRow()
+            if selected_row == -1:
+                return
+
+            phone_data = self.cursor.execute("SELECT * FROM phones WHERE id_phone=?",
+                                             (self.phones_table.item(selected_row,
+                                                                     0).text(),)).fetchone()
+
+            dialog = QDialog()
+            dialog.setWindowTitle("Редактировать телефон")
+
+            layout = QFormLayout()
+
+            owner_id_combo = QComboBox()
+            owner_id_combo.addItems([str(row[0]) for row in self.cursor.execute(
+                'SELECT id_abonent FROM abonents').fetchall()])
+            owner_id_combo.setCurrentIndex(owner_id_combo.findText(str(phone_data[1])))
+            plan_id_combo = QComboBox()
+            plan_id_combo.addItems([str(row[0]) for row in self.cursor.execute(
+                'SELECT id_plan FROM plans').fetchall()])
+            plan_id_combo.setCurrentIndex(plan_id_combo.findText(str(phone_data[2])))
+
+            phone_edit = QLineEdit(str(phone_data[3]))
+            region_edit = QLineEdit(str(phone_data[4]))
+            block_edit = QLineEdit(str(phone_data[5]))
+            roaming_edit = QLineEdit(str(phone_data[6]))
+            lastactive_edit = QDateEdit()
+            lastactive_edit.setDate(QDate.fromString(phone_data[7], "yyyy-MM-dd"))
+            regdate_edit = QDateEdit()
+            regdate_edit.setDate(QDate.fromString(phone_data[8], "yyyy-MM-dd"))
+
+            layout.addRow("Владелец", owner_id_combo)
+            layout.addRow("Тариф", plan_id_combo)
+            layout.addRow("Номер", phone_edit)
+            layout.addRow("Регион", region_edit)
+            layout.addRow("Блокировка", block_edit)
+            layout.addRow("Роуминг", roaming_edit)
+            layout.addRow("Последняя активность", lastactive_edit)
+            layout.addRow("Дата регистрации", regdate_edit)
+
+            save_button = QPushButton("Сохранить")
+            save_button.clicked.connect(lambda: self.save_phone_edit(phone_data[0],
+                                                                     owner_id_combo.currentText(),
+                                                                     plan_id_combo.currentText(),
+                                                                     phone_edit.text(),
+                                                                     region_edit.text(),
+                                                                     block_edit.text(),
+                                                                     roaming_edit.text(),
+                                                                     lastactive_edit.date().toString(
+                                                                         "yyyy-MM-dd"),
+                                                                     regdate_edit.date().toString(
+                                                                         "yyyy-MM-dd"),
+                                                                     dialog))
+            layout.addWidget(save_button)
+
+            dialog.setLayout(layout)
+            dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", str(e))
+
+    # Обновление данных телефона
+    def save_phone_edit(self, phone_id, owner_id, plan_id, phone, region, block,roaming, lastactive, regdate, dialog):
+        try:
+            if not owner_id or not plan_id or not phone or not region or not block or not roaming or not lastactive or not regdate:
+                QMessageBox.warning(self, 'Ошибка', 'Заполните все поля')
+                return
+            try:
+                phone = int(phone)
+                if len(str(phone)) != 11:
+                    QMessageBox.warning(self, 'Ошибка',
+                                        'Не корректная длина номера телефона')
+                    return
+            except Exception:
+                QMessageBox.warning(self, 'Ошибка',
+                                    'Не корректный формат телефона')
+                return
+            self.cursor.execute(
+                "UPDATE phones SET owner_id=?, plan_id=?, phone=?, region=?, block=?, roaming=?, lastactive=?, regdate=? WHERE id_phone=?",
+                (owner_id, plan_id, phone, region, block, roaming, lastactive,
+                 regdate, phone_id))
+            self.db.commit()
+
+            self.update_phones_table()
+
+            dialog.close()
+
+            QMessageBox.information(self, "Успешно", "Телефон обновлен")
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", str(e))
+
+    # Редактирование тарифа
+    def edit_plan(self):
+        try:
+            selected_row = self.plans_table.currentRow()
+            if selected_row == -1:
+                return
+
+            plan_data = self.cursor.execute("SELECT * FROM plans WHERE id_plan=?",
+                                            (self.plans_table.item(selected_row,
+                                                                   0).text(),)).fetchone()
+
+            dialog = QDialog()
+            dialog.setWindowTitle("Редактировать тариф")
+
+            layout = QFormLayout()
+
+            name_edit = QLineEdit(plan_data[1])
+            price_edit = QDoubleSpinBox()
+            price_edit.setRange(0.1, 1000000.0)
+            price_edit.setValue(plan_data[2])
+            traffic_edit = QLineEdit(plan_data[3])
+            calls_edit = QLineEdit(plan_data[4])
+            sms_edit = QLineEdit(plan_data[5])
+
+            layout.addRow("Название", name_edit)
+            layout.addRow("Цена", price_edit)
+            layout.addRow("Трафик", traffic_edit)
+            layout.addRow("Звонки", calls_edit)
+            layout.addRow("Сообщения", sms_edit)
+
+            save_button = QPushButton("Сохранить")
+            save_button.clicked.connect(
+                lambda: self.save_plan_edit(plan_data[0], name_edit.text(),
+                                            price_edit.value(),
+                                            traffic_edit.text(),
+                                            calls_edit.text(), sms_edit.text(),
+                                            dialog))
+            layout.addWidget(save_button)
+
+            dialog.setLayout(layout)
+            dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка редактирования", str(e))
+
+    # Обновление данных тарифа
+    def save_plan_edit(self, plan_id, name, price, traffic, calls,sms, dialog):
+        try:
+            if not name or not price or not traffic or not calls or not sms:
+                QMessageBox.warning(self, 'Ошибка', 'Заполните все поля')
+                return
+            self.cursor.execute(
+                "UPDATE plans SET name=?, price=?, traffic=?, calls=?, sms=? WHERE id_plan=?",
+                (name, price, traffic, calls,sms, plan_id))
+            self.db.commit()
+
+            self.update_plans_table()
+
+            dialog.close()
+            QMessageBox.information(self, "Успешно", "Тариф обновлен")
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", str(e))
 
     # Импорт абонентов из Excel
     def import_abonents_to_excel(self):
