@@ -753,9 +753,9 @@ class MainWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, 'Ошибка',
                                     'Выберите запись для удаления.')
-            QMessageBox.information(self, 'Успешно', 'Запись удалена')
             self.update_abonents_table()
             self.update_phones_table()
+            QMessageBox.information(self, 'Успешно', 'Запись удалена')
         except Exception as e:
             QMessageBox.warning(self, 'Ошибка',str(e))
 
@@ -776,6 +776,7 @@ class MainWindow(QMainWindow):
                 self.update_phones_table()
         else:
             QMessageBox.warning(self, 'Предупреждение', 'Выберите телефон')
+        self.update_phones_table()
         QMessageBox.information(self, 'Успешно', 'Запись удалена')
 
     # Удаление записи о тарифе
@@ -824,9 +825,9 @@ class MainWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, 'Ошибка',
                                     'Выберите запись для удаления.')
-            QMessageBox.information(self, 'Успешно', 'Запись удалена')
             self.update_phones_table()
             self.update_plans_table()
+            QMessageBox.information(self, 'Успешно', 'Запись удалена')
         except Exception as e:
             QMessageBox.warning(self, 'Ошибка', str(e))
 
