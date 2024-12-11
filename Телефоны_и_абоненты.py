@@ -224,9 +224,9 @@ class MainWindow(QMainWindow):
         try:
             self.cursor.execute('INSERT INTO abonents (name, birth, entity) VALUES (?, ?, ?)', (name, birth, entity))
             self.db.commit()
+            self.update_abonents_table()
             QMessageBox.information(self, 'Успешно', 'Абонент создан')
             dialog.close()
-            self.update_abonents_table()
         except sqlite3.Error as e:
             QMessageBox.critical(self, 'Ошибка', str(e))
 
@@ -289,9 +289,9 @@ class MainWindow(QMainWindow):
         try:
             self.cursor.execute('INSERT INTO phones (owner_id, plan_id, phone, region, block, roaming, lastactive, regdate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (owner_id, plan_id, phone, region, block, roaming, lastactive, regdate))
             self.db.commit()
+            self.update_phones_table()
             QMessageBox.information(self, 'Успешно', 'Телефон создан')
             dialog.close()
-            self.update_phones_table()
         except sqlite3.Error as e:
             QMessageBox.critical(self, 'Ошибка', str(e))
 
@@ -332,9 +332,9 @@ class MainWindow(QMainWindow):
         try:
             self.cursor.execute('INSERT INTO plans (name, price, traffic, calls, sms) VALUES (?, ?, ?, ?, ?)', (name, price, traffic, calls, sms))
             self.db.commit()
+            self.update_plans_table()
             QMessageBox.information(self, 'Успешно', 'Тариф создан')
             dialog.close()
-            self.update_plans_table()
         except sqlite3.Error as e:
             QMessageBox.critical(self, 'Ошибка', str(e))
 
