@@ -116,7 +116,11 @@ class MainWindow(QMainWindow):
         self.phones_table = QTableWidget()
         self.phones_table.setSortingEnabled(True)
         self.phones_table.setColumnCount(9)
-        self.phones_table.setHorizontalHeaderLabels(['ID', 'Владелец', 'Тариф', 'Номер', 'Регион', 'Блокировка', 'Роуминг', 'Последняя активность', 'Дата регистрации'])
+        self.phones_table.setHorizontalHeaderLabels(['ID', 'Владелец',
+                                                     'Тариф', 'Номер',
+                                                     'Регион', 'Блокировка',
+                                                     'Роуминг', 'Последняя активность',
+                                                     'Дата регистрации'])
         layout.addWidget(self.phones_table)
 
         create_button = QPushButton('Создать')
@@ -145,7 +149,7 @@ class MainWindow(QMainWindow):
         self.plans_table = QTableWidget()
         self.plans_table.setSortingEnabled(True)
         self.plans_table.setColumnCount(6)
-        self.plans_table.setHorizontalHeaderLabels(['ID', 'Название', 'Цена', 'Трафик', 'Звонки', 'СМС'])
+        self.plans_table.setHorizontalHeaderLabels(['ID', 'Название', 'Цена р.', 'Трафик', 'Звонки', 'СМС'])
         layout.addWidget(self.plans_table)
 
         create_button = QPushButton('Создать')
@@ -209,7 +213,9 @@ class MainWindow(QMainWindow):
         layout.addRow('Дата рождения', birth_edit)
         layout.addRow('Тип субъекта', entity_edit)
         create_button = QPushButton('Создать')
-        create_button.clicked.connect(lambda: self.create_abonent_slot(name_edit.text(), birth_edit.date().toString('yyyy-MM-dd'), entity_edit.text(), dialog))
+        create_button.clicked.connect(lambda: self.create_abonent_slot(name_edit.text(),
+                                                                       birth_edit.date().toString('yyyy-MM-dd'),
+                                                                       entity_edit.text(), dialog))
         layout.addWidget(create_button)
 
         dialog.setLayout(layout)
@@ -222,7 +228,8 @@ class MainWindow(QMainWindow):
             return
 
         try:
-            self.cursor.execute('INSERT INTO abonents (name, birth, entity) VALUES (?, ?, ?)', (name, birth, entity))
+            self.cursor.execute('INSERT INTO abonents (name, birth, entity) VALUES (?, ?, ?)',
+                                (name, birth, entity))
             self.db.commit()
             self.update_abonents_table()
             QMessageBox.information(self, 'Успешно', 'Абонент создан')
@@ -232,53 +239,59 @@ class MainWindow(QMainWindow):
 
     # Создание телефона диалоговым окном
     def create_phone(self):
-        dialog = QDialog()
-        dialog.setWindowTitle('Создать телефон')
+        try:
+            dialog = QDialog()
+            dialog.setWindowTitle('Создать телефон')
 
-        layout = QFormLayout()
-        owner_id_combo = QComboBox()
-        owner_id_combo.addItems([str(row[0]) for row in self.cursor.execute('SELECT id_abonent FROM abonents').fetchall()])
-        plan_id_combo = QComboBox()
-        plan_id_combo.addItems([str(row[0]) for row in self.cursor.execute('SELECT id_plan FROM plans').fetchall()])
+            layout = QFormLayout()
+            owner_id = QLineEdit()
+            plan_id_combo = QComboBox()
+            plan_id_combo.addItems([str(row[0]) for row in self.cursor.execute('SELECT id_plan FROM plans').fetchall()])
 
-        if not owner_id_combo and not plan_id_combo:
-            QMessageBox.warning(self, 'Ошибка', 'Сначала зарегистрируйте абонента и создайте тариф')
-            return
-        if not owner_id_combo:
-            QMessageBox.warning(self, 'Ошибка', 'Сначала зарегистрируйте абонента')
-            return
-        if not plan_id_combo:
-            QMessageBox.warning(self, 'Ошибка', 'Сначала создайте тариф')
-            return
+            if not plan_id_combo:
+                QMessageBox.warning(self, 'Ошибка', 'Сначала зарегистрируйте абонента и создайте тариф')
+                return
+            # if not owner_id:
+            #     QMessageBox.warning(self, 'Ошибка', 'Сначала зарегистрируйте абонента')
+            #     return
+            if not plan_id_combo:
+                QMessageBox.warning(self, 'Ошибка', 'Сначала создайте тариф')
+                return
 
-        phone_edit = QLineEdit()
-        region_edit = QLineEdit()
-        block_edit = QLineEdit()
-        roaming_edit = QLineEdit()
-        lastactive_edit = QDateEdit()
-        regdate_edit = QDateEdit()
-        layout.addRow('Владелец', owner_id_combo)
-        layout.addRow('Тариф', plan_id_combo)
-        layout.addRow('Номер', phone_edit)
-        layout.addRow('Регион', region_edit)
-        layout.addRow('Блокировка', block_edit)
-        layout.addRow('Роуминг', roaming_edit)
-        layout.addRow('Последняя активность', lastactive_edit)
-        layout.addRow('Дата регистрации', regdate_edit)
 
-        create_button = QPushButton('Создать')
-        create_button.clicked.connect(lambda: self.create_phone_slot(owner_id_combo.currentText(), plan_id_combo.currentText(), phone_edit.text(), region_edit.text(), block_edit.text(), roaming_edit.text(), lastactive_edit.date().toString('yyyy-MM-dd'), regdate_edit.date().toString('yyyy-MM-dd'), dialog))
-        layout.addWidget(create_button)
+            phone_edit = QLineEdit()
+            region_edit = QLineEdit()
+            block_edit = QLineEdit()
+            roaming_edit = QLineEdit()
+            lastactive_edit = QDateEdit()
+            regdate_edit = QDateEdit()
+            layout.addRow('ID владельца', owner_id)
+            layout.addRow('Тариф', plan_id_combo)
+            layout.addRow('Номер', phone_edit)
+            layout.addRow('Регион', region_edit)
+            layout.addRow('Блокировка', block_edit)
+            layout.addRow('Роуминг', roaming_edit)
+            layout.addRow('Последняя активность', lastactive_edit)
+            layout.addRow('Дата регистрации', regdate_edit)
 
-        dialog.setLayout(layout)
-        dialog.exec()
+            create_button = QPushButton('Создать')
+            create_button.clicked.connect(lambda: self.create_phone_slot(owner_id.text(), plan_id_combo.currentText(), phone_edit.text(), region_edit.text(), block_edit.text(), roaming_edit.text(), lastactive_edit.date().toString('yyyy-MM-dd'), regdate_edit.date().toString('yyyy-MM-dd'), dialog))
+            layout.addWidget(create_button)
 
+            dialog.setLayout(layout)
+            dialog.exec()
+        except Exception as e:
+            QMessageBox.warning(self, 'Ошибка',str(e))
     # Заполнение данных телефона в таблицу
     def create_phone_slot(self, owner_id, plan_id, phone, region, block, roaming, lastactive, regdate, dialog):
-        if not owner_id or not plan_id or not phone or not region or not block or not roaming or not  lastactive or not regdate:
-            QMessageBox.warning(self, 'Ошибка', 'Заполните все поля')
-            return
         try:
+            if not owner_id or not plan_id or not phone or not region or not block or not roaming or not  lastactive or not regdate:
+                QMessageBox.warning(self, 'Ошибка', 'Заполните все поля')
+                return
+            if not self.cursor.execute('SELECT * FROM abonents WHERE id_abonent = ?',
+                                       (owner_id,)).fetchone():
+                QMessageBox.warning(self, 'Ошибка', 'Такого владельца не существует')
+                return
             phone=int(phone)
             if len(str(phone))!=11:
                 QMessageBox.warning(self, 'Ошибка', 'Не корректная длина номера телефона')
@@ -307,7 +320,7 @@ class MainWindow(QMainWindow):
         calls_edit = QLineEdit()
         sms_edit = QLineEdit()
         layout.addRow('Название', name_edit)
-        layout.addRow('Цена', price_edit)
+        layout.addRow('Цена р.', price_edit)
         layout.addRow('Трафик', traffic_edit)
         layout.addRow('Звонки', calls_edit)
         layout.addRow('СМС', sms_edit)
@@ -406,10 +419,7 @@ class MainWindow(QMainWindow):
 
             layout = QFormLayout()
 
-            owner_id_combo = QComboBox()
-            owner_id_combo.addItems([str(row[0]) for row in self.cursor.execute(
-                'SELECT id_abonent FROM abonents').fetchall()])
-            owner_id_combo.setCurrentIndex(owner_id_combo.findText(str(phone_data[1])))
+            owner_id = QLineEdit(str(phone_data[1]))
             plan_id_combo = QComboBox()
             plan_id_combo.addItems([str(row[0]) for row in self.cursor.execute(
                 'SELECT id_plan FROM plans').fetchall()])
@@ -424,7 +434,7 @@ class MainWindow(QMainWindow):
             regdate_edit = QDateEdit()
             regdate_edit.setDate(QDate.fromString(phone_data[8], "yyyy-MM-dd"))
 
-            layout.addRow("Владелец", owner_id_combo)
+            layout.addRow("ID владельца", owner_id)
             layout.addRow("Тариф", plan_id_combo)
             layout.addRow("Номер", phone_edit)
             layout.addRow("Регион", region_edit)
@@ -435,7 +445,7 @@ class MainWindow(QMainWindow):
 
             save_button = QPushButton("Сохранить")
             save_button.clicked.connect(lambda: self.save_phone_edit(phone_data[0],
-                                                                     owner_id_combo.currentText(),
+                                                                     owner_id.text(),
                                                                      plan_id_combo.currentText(),
                                                                      phone_edit.text(),
                                                                      region_edit.text(),
@@ -451,13 +461,23 @@ class MainWindow(QMainWindow):
             dialog.setLayout(layout)
             dialog.exec()
         except Exception as e:
-            QMessageBox.critical(self, "Ошибка", str(e))
+            QMessageBox.critical(self, "Ошибка редактирования", str(e))
 
     # Обновление данных телефона
     def save_phone_edit(self, phone_id, owner_id, plan_id, phone, region, block,roaming, lastactive, regdate, dialog):
         try:
             if not owner_id or not plan_id or not phone or not region or not block or not roaming or not lastactive or not regdate:
                 QMessageBox.warning(self, 'Ошибка', 'Заполните все поля')
+                return
+            try:
+                owner_id=int(owner_id)
+            except Exception:
+                QMessageBox.warning(self, 'Ошибка',
+                                    'Не корректный формат id владельца')
+                return
+            if not self.cursor.execute('SELECT * FROM abonents WHERE id_abonent = ?',
+                                       (owner_id,)).fetchone():
+                QMessageBox.warning(self, 'Ошибка', 'Такого владельца не существует')
                 return
             try:
                 phone = int(phone)
@@ -481,7 +501,7 @@ class MainWindow(QMainWindow):
 
             QMessageBox.information(self, "Успешно", "Телефон обновлен")
         except Exception as e:
-            QMessageBox.critical(self, "Ошибка", str(e))
+            QMessageBox.critical(self, "Ошибка обновления данных", str(e))
 
     # Редактирование тарифа
     def edit_plan(self):
@@ -509,7 +529,7 @@ class MainWindow(QMainWindow):
             sms_edit = QLineEdit(plan_data[5])
 
             layout.addRow("Название", name_edit)
-            layout.addRow("Цена", price_edit)
+            layout.addRow("Цена р.", price_edit)
             layout.addRow("Трафик", traffic_edit)
             layout.addRow("Звонки", calls_edit)
             layout.addRow("Сообщения", sms_edit)
@@ -774,10 +794,11 @@ class MainWindow(QMainWindow):
                                     (id_phone,))
                 self.db.commit()
                 self.update_phones_table()
+                QMessageBox.information(self, 'Успешно', 'Запись удалена')
         else:
             QMessageBox.warning(self, 'Предупреждение', 'Выберите телефон')
         self.update_phones_table()
-        QMessageBox.information(self, 'Успешно', 'Запись удалена')
+
 
     # Удаление записи о тарифе
     def delete_plan(self):
@@ -808,7 +829,7 @@ class MainWindow(QMainWindow):
                                 "UPDATE phones SET plan_id = '*' WHERE plan_id = ?",
                                 (id_plan,))
                             self.cursor.execute(
-                                'DELETE FROM plans WHERE id = ?',
+                                'DELETE FROM plans WHERE id_plan = ?',
                                 (id_plan,))
                             self.db.commit()
                         else:
