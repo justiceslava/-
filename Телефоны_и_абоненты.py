@@ -207,7 +207,7 @@ class MainWindow(QMainWindow):
         entity_edit = QLineEdit()
         layout.addRow('Имя', name_edit)
         layout.addRow('Дата рождения', birth_edit)
-        layout.addRow('Организация', entity_edit)
+        layout.addRow('Тип субъекта', entity_edit)
         create_button = QPushButton('Создать')
         create_button.clicked.connect(lambda: self.create_abonent_slot(name_edit.text(), birth_edit.date().toString('yyyy-MM-dd'), entity_edit.text(), dialog))
         layout.addWidget(create_button)
